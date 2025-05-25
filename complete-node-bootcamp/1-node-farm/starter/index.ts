@@ -2,21 +2,8 @@ const fs = require('fs');
 const http = require('http');
 const url = require('url');
 
-// const textIn = fs.readFileSync('./txt/input.txt', 'utf-8');
-
-// const textOut = `this is what we know about the avocado: ${textIn}.\nCreated on ${new Date().toLocaleString('uk-UA')}`;
-
-// fs.writeFileSync('./txt/output.txt', textOut, 'utf-8');
-// console.log('File written successfully!');
-
-// fs.readFile('./txt/output.txt', 'utf-8', (err, data) => {
-//   if (err) {
-//     console.log('Error reading file:', err);
-//     return;
-//   }
-//   console.log('File content:', data);
-// });
-// console.log('Reading file...');
+    const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
+      const dataObj = JSON.parse(data);
 
 const server = http.createServer((req, res) => {
   const pathName = req.url;
@@ -24,6 +11,11 @@ const server = http.createServer((req, res) => {
     res.end('This is the OVERVIEW');
   } else if(pathName === '/product') {
     res.end('This is the PRODUCT');
+  } else if(pathName === '/api') {
+      res.writeHead(200, {
+        'Content-type': 'application/json',
+      });
+      res.end(data);
   } else {
     res.writeHead(404, {
       'Content-type': 'text/html',
