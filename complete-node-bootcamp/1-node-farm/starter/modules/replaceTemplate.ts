@@ -3,6 +3,7 @@ module.exports = (template, product) => {
     /{%PRODUCT_NAME%}/g,
     product.productName
   );
+  output = output.replace(/{%SLUG%}/g, product.slug);
   output = output.replace(/{%IMAGE%}/g, product.image);
   output = output.replace(/{%FROM%}/g, product.from);
   output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);

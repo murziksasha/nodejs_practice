@@ -12,7 +12,7 @@ const data = fs.readFileSync(
 const dataObj = JSON.parse(data);
 // Slugify the product names
 const slugs = dataObj.map((el) =>
-  slugify(el.productName, { lower: true })
+  el.slug = slugify(el.productName, { lower: true })
 );
 console.log(slugs);
 const tempOverview = fs.readFileSync(
@@ -32,8 +32,6 @@ const server = http.createServer((req, res) => {
   console.log(req.url);
   const { pathname, query } = url.parse(req.url, true);
 
-  // const pathName = req.url;
-
   // Overview page
   if (pathname === '/' || pathname === '/overview') {
     res.writeHead(200, {
@@ -48,13 +46,17 @@ const server = http.createServer((req, res) => {
     );
     res.end(output);
     // Product page
-  } else if (pathname === '/product') {
-    const product = dataObj[query.id];
-    res.writeHead(200, {
-      'Content-type': 'text/html',
-    });
+  } else if (pathname.startsWith('/product/')) {
+  const slug = pathname.replace('/product/', '');
+  const product = dataObj.find(el => el.slug === slug);
+      if (product) {
+    res.writeHead(200, { 'Content-type': 'text/html' });
     const output = replaceTemplate(tempProduct, product);
     res.end(output);
+  } else {
+    res.writeHead(404, { 'Content-type': 'text/html' });
+    res.end('<h1>Product not found</h1>');
+  }
 
     // API
   } else if (pathname === '/api') {
