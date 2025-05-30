@@ -1,6 +1,7 @@
 const fs = require('fs');
 const http = require('http');
 const url = require('url');
+const slugify = require('slugify');
 // Importing the replaceTemplate function
 const replaceTemplate = require('./modules/replaceTemplate');
 
@@ -9,6 +10,11 @@ const data = fs.readFileSync(
   'utf-8'
 );
 const dataObj = JSON.parse(data);
+// Slugify the product names
+const slugs = dataObj.map((el) =>
+  slugify(el.productName, { lower: true })
+);
+console.log(slugs);
 const tempOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
   'utf-8'
