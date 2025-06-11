@@ -1,5 +1,16 @@
 {
+  "name": "starter",
+  "version": "1.0.0",
+  "description": "A starter project for learning asynchronous JavaScript in Node.js",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node index.ts",
+    "dev": "nodemon index.ts"
+  },
   "devDependencies": {
     "@types/node": "^24.0.0"
+  },
+  "dependencies": {
+    "superagent": "^10.2.1"
   }
 }
