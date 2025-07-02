@@ -38,6 +38,19 @@ const getDogPic = async () => {
   }
   console.log('2: Ready 🐩');
 };
+
+(async () => {
+  try {
+    console.log('1: Will get dog pics!');
+    await getDogPic();
+    console.log('3: Done getting dog pics!');
+  } catch (err) {
+    console.error('Error:', err);
+  }
+})();
+
+
+/*
 console.log('1: Will get dog pics!');
 getDogPic()
   .then((x) => {
@@ -47,6 +60,7 @@ getDogPic()
   .catch((err) => {
     console.error('Error:', err);
   });
+*/
 
 /*
 readFilePromise(`${__dirname}/dog.txt`).then((data) => { 
