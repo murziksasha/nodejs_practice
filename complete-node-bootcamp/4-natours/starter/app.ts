@@ -7,8 +7,14 @@ const userRouter = require('./routes/userRoutes').default;
 
 const app = express();
 
+if(process.env.NODE_ENV === 'development') {
+  console.log('Development mode');
+  app.use(morgan('dev'));
+}
+
 app.use(morgan('dev')); // Logging middleware for development
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(express.static(`${__dirname}/public`)); // Serve static files from the 'public' directory
 
 app.use((req, res, next) => {
   const currentTime = new Date().toISOString();
