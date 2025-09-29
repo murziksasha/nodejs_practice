@@ -74,19 +74,52 @@ const createTour = async (req, res) => {
   }
 };
 
-const updateTour = (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: '<Updated tour data here>',
-    },
-  });
+const updateTour = async (req, res) => {
+  try {
+     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+    // const tour = await Tour.findOne({ _id: req.params.id });
+
+    if (!tour) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Tour not found',
+      });
+    }
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour: req.body,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: error.message,
+    });
+  }
 };
 
-const deleteTour = (req, res) => {
-  res.status(204).json({
+const deleteTour = async (req, res) => {
+  try {
+    const tour =  await Tour.findByIdAndDelete(req.params.id);
+    if (!tour) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Tour not found',
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: error.message,
+    });
+  }
+  res.status(200).json({
     status: 'success',
-    data: null,
+    message: "Deleted successfully"
   });
 };
 export { getAllTours, getTour, createTour, updateTour, deleteTour, checkBody };
