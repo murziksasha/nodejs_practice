@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Tour} from '../models/tourModel';
+import { Tour } from '../models/tourModel';
 
 const checkBody = (req, res, next) => {
   if (!req.body.name || !req.body.price) {
@@ -14,7 +14,17 @@ const checkBody = (req, res, next) => {
 
 const getAllTours = async (req, res) => {
   try {
-    const tours = await Tour.find();
+    //Build the query
+    const queryobject = { ...req.query };
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach((el) => delete queryobject[el]);
+    const query = Tour.find(queryobject);
+
+    //Execute Query
+    const tours = await query;
+
+
+
     res.status(200).json({
       status: 'success',
       results: tours.length,
@@ -76,9 +86,9 @@ const createTour = async (req, res) => {
 
 const updateTour = async (req, res) => {
   try {
-     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-      runValidators: true
+      runValidators: true,
     });
     // const tour = await Tour.findOne({ _id: req.params.id });
 
@@ -104,7 +114,7 @@ const updateTour = async (req, res) => {
 
 const deleteTour = async (req, res) => {
   try {
-    const tour =  await Tour.findByIdAndDelete(req.params.id);
+    const tour = await Tour.findByIdAndDelete(req.params.id);
     if (!tour) {
       return res.status(404).json({
         status: 'fail',
@@ -119,7 +129,7 @@ const deleteTour = async (req, res) => {
   }
   res.status(200).json({
     status: 'success',
-    message: "Deleted successfully"
+    message: 'Deleted successfully',
   });
 };
 export { getAllTours, getTour, createTour, updateTour, deleteTour, checkBody };

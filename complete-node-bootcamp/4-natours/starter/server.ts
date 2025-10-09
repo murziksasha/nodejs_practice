@@ -2,8 +2,10 @@
 
 import * as mongoose from "mongoose";
 import * as dotenv from "dotenv";
-import app from "./app";
 dotenv.config({ path: "./config.env" });
+import app from "./app";
+
+
 // Connect to the database
 
 const DB = process.env.DATABASE!.replace(
