@@ -23,17 +23,29 @@ const getAllTours = async (req, res) => {
     const queryObject = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObject[el]);
-    
+
     //2) Advanced Filtering
-    let queryStr = JSON.stringify(queryObject);
-    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
-    
-    const query = Tour.find(JSON.parse(queryStr));
+    const mongoQuery = {};
+    Object.keys(queryObject).forEach((key) => {
+      const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
+      if (match) {
+        const field = match[1];
+        const operator = `$${match[2]}`;
+        if (!mongoQuery[field]) mongoQuery[field] = {};
+        // Convert value to number if possible
+        const val = isNaN(queryObject[key]) ? queryObject[key] : Number(queryObject[key]);
+        mongoQuery[field][operator] = val;
+      } else {
+        // Convert value to number if possible
+        mongoQuery[key] = isNaN(queryObject[key]) ? queryObject[key] : Number(queryObject[key]);
+      }
+    });
+
+
+    const query = Tour.find(mongoQuery);
 
     //Execute Query
     const tours = await query;
-
-
 
     res.status(200).json({
       status: 'success',
