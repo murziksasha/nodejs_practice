@@ -23,37 +23,37 @@ const aliasTopTours = (req, res, next) => {
   // @ts-ignore
   req.aliasQuery = { ...add };
 
-  console.log('aliasTopTours set req.aliasQuery:', req.aliasQuery);
   next();
 };
 
 const getAllTours = async (req, res) => {
   try {
-    console.log('Request query at start:', req.query);
-    //{ 'duration[gte]': '5', difficulty: 'easy' }
-    //{ 'duration[$gte]': '5', difficulty: 'easy' } - after replace
+    // merge original query with aliasQuery (alias wins)
+    // @ts-ignore
+    const effectiveQuery = {
+      ...(req.query || {}),
+      ...((req as any).aliasQuery || {}),
+    };
 
     //Build the query
     //1) Filtering
-    const queryObject = { ...req.query };
+    const queryObject = { ...effectiveQuery };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     excludedFields.forEach((el) => delete queryObject[el]);
 
     //2) Advanced Filtering
-    const mongoQuery = {};
+    const mongoQuery: any = {};
     Object.keys(queryObject).forEach((key) => {
       const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
       if (match) {
         const field = match[1];
         const operator = `$${match[2]}`;
         if (!mongoQuery[field]) mongoQuery[field] = {};
-        // Convert value to number if possible
         const val = isNaN(queryObject[key])
           ? queryObject[key]
           : Number(queryObject[key]);
         mongoQuery[field][operator] = val;
       } else {
-        // Convert value to number if possible
         mongoQuery[key] = isNaN(queryObject[key])
           ? queryObject[key]
           : Number(queryObject[key]);
@@ -63,27 +63,27 @@ const getAllTours = async (req, res) => {
     let query = Tour.find(mongoQuery);
 
     //3) Sorting
-    if (req.query.sort) {
-      const sortBy = req.query.sort.split(',').join(' ');
+    if (effectiveQuery.sort) {
+      const sortBy = String(effectiveQuery.sort).split(',').join(' ');
       query = query.sort(sortBy);
     } else {
       query = query.sort('-createdAt');
     }
 
     //4) Field Limiting
-    if (req.query.fields) {
-      const fields = req.query.fields.split(',').join(' ');
+    if (effectiveQuery.fields) {
+      const fields = String(effectiveQuery.fields).split(',').join(' ');
       query = query.select(fields);
     } else {
       query = query.select('-__v');
     }
 
     //5) Pagination
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 100;
+    const page = parseInt(String(effectiveQuery.page || '1'), 10);
+    const limit = parseInt(String(effectiveQuery.limit || '100'), 10);
     const skip = (page - 1) * limit;
     query = query.skip(skip).limit(limit);
-    if (req.query.page) {
+    if (effectiveQuery.page) {
       const numTours = await Tour.countDocuments();
       if (skip >= numTours) {
         throw new Error('This page does not exist');
