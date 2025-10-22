@@ -12,9 +12,24 @@ const checkBody = (req, res, next) => {
   next();
 };
 
+const aliasTopTours = (req, res, next) => {
+  const add = {
+    limit: '5',
+    sort: '-ratingsAverage,price',
+    fields: 'name,price,ratingsAverage,summary,difficulty',
+  };
+
+  // safe: keep original req.query untouched, store alias params separately
+  // @ts-ignore
+  req.aliasQuery = { ...add };
+
+  console.log('aliasTopTours set req.aliasQuery:', req.aliasQuery);
+  next();
+};
+
 const getAllTours = async (req, res) => {
   try {
-    console.log(req.query);
+    console.log('Request query at start:', req.query);
     //{ 'duration[gte]': '5', difficulty: 'easy' }
     //{ 'duration[$gte]': '5', difficulty: 'easy' } - after replace
 
@@ -33,31 +48,46 @@ const getAllTours = async (req, res) => {
         const operator = `$${match[2]}`;
         if (!mongoQuery[field]) mongoQuery[field] = {};
         // Convert value to number if possible
-        const val = isNaN(queryObject[key]) ? queryObject[key] : Number(queryObject[key]);
+        const val = isNaN(queryObject[key])
+          ? queryObject[key]
+          : Number(queryObject[key]);
         mongoQuery[field][operator] = val;
       } else {
         // Convert value to number if possible
-        mongoQuery[key] = isNaN(queryObject[key]) ? queryObject[key] : Number(queryObject[key]);
+        mongoQuery[key] = isNaN(queryObject[key])
+          ? queryObject[key]
+          : Number(queryObject[key]);
       }
     });
-
 
     let query = Tour.find(mongoQuery);
 
     //3) Sorting
-    if(req.query.sort){
+    if (req.query.sort) {
       const sortBy = req.query.sort.split(',').join(' ');
       query = query.sort(sortBy);
-    }else{
+    } else {
       query = query.sort('-createdAt');
     }
 
     //4) Field Limiting
-    if(req.query.fields){
+    if (req.query.fields) {
       const fields = req.query.fields.split(',').join(' ');
       query = query.select(fields);
-    }else{
+    } else {
       query = query.select('-__v');
+    }
+
+    //5) Pagination
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 100;
+    const skip = (page - 1) * limit;
+    query = query.skip(skip).limit(limit);
+    if (req.query.page) {
+      const numTours = await Tour.countDocuments();
+      if (skip >= numTours) {
+        throw new Error('This page does not exist');
+      }
     }
 
     //Execute Query
@@ -170,4 +200,12 @@ const deleteTour = async (req, res) => {
     message: 'Deleted successfully',
   });
 };
-export { getAllTours, getTour, createTour, updateTour, deleteTour, checkBody };
+export {
+  getAllTours,
+  getTour,
+  createTour,
+  updateTour,
+  deleteTour,
+  checkBody,
+  aliasTopTours,
+};
