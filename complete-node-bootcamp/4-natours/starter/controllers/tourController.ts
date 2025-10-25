@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { Tour } from '../models/tourModel';
+import { APIFeatures } from '../utils/apiFeatures';
 
 const checkBody = (req, res, next) => {
   if (!req.body.name || !req.body.price) {
@@ -26,6 +27,8 @@ const aliasTopTours = (req, res, next) => {
   next();
 };
 
+
+
 const getAllTours = async (req, res) => {
   try {
     // merge original query with aliasQuery (alias wins)
@@ -36,62 +39,67 @@ const getAllTours = async (req, res) => {
     };
 
     //Build the query
-    //1) Filtering
-    const queryObject = { ...effectiveQuery };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((el) => delete queryObject[el]);
+    //1) Filterings
+    // const queryObject = { ...effectiveQuery };
+    // const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    // excludedFields.forEach((el) => delete queryObject[el]);
 
     //2) Advanced Filtering
-    const mongoQuery: any = {};
-    Object.keys(queryObject).forEach((key) => {
-      const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
-      if (match) {
-        const field = match[1];
-        const operator = `$${match[2]}`;
-        if (!mongoQuery[field]) mongoQuery[field] = {};
-        const val = isNaN(queryObject[key])
-          ? queryObject[key]
-          : Number(queryObject[key]);
-        mongoQuery[field][operator] = val;
-      } else {
-        mongoQuery[key] = isNaN(queryObject[key])
-          ? queryObject[key]
-          : Number(queryObject[key]);
-      }
-    });
+    // const mongoQuery: any = {};
+    // Object.keys(queryObject).forEach((key) => {
+    //   const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
+    //   if (match) {
+    //     const field = match[1];
+    //     const operator = `$${match[2]}`;
+    //     if (!mongoQuery[field]) mongoQuery[field] = {};
+    //     const val = isNaN(queryObject[key])
+    //       ? queryObject[key]
+    //       : Number(queryObject[key]);
+    //     mongoQuery[field][operator] = val;
+    //   } else {
+    //     mongoQuery[key] = isNaN(queryObject[key])
+    //       ? queryObject[key]
+    //       : Number(queryObject[key]);
+    //   }
+    // });
 
-    let query = Tour.find(mongoQuery);
+    // let query = Tour.find(mongoQuery);
 
     //3) Sorting
-    if (effectiveQuery.sort) {
-      const sortBy = String(effectiveQuery.sort).split(',').join(' ');
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort('-createdAt');
-    }
+    // if (effectiveQuery.sort) {
+    //   const sortBy = String(effectiveQuery.sort).split(',').join(' ');
+    //   query = query.sort(sortBy);
+    // } else {
+    //   query = query.sort('-createdAt');
+    // }
 
     //4) Field Limiting
-    if (effectiveQuery.fields) {
-      const fields = String(effectiveQuery.fields).split(',').join(' ');
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
+    // if (effectiveQuery.fields) {
+    //   const fields = String(effectiveQuery.fields).split(',').join(' ');
+    //   query = query.select(fields);
+    // } else {
+    //   query = query.select('-__v');
+    // }
 
     //5) Pagination
-    const page = parseInt(String(effectiveQuery.page || '1'), 10);
-    const limit = parseInt(String(effectiveQuery.limit || '100'), 10);
-    const skip = (page - 1) * limit;
-    query = query.skip(skip).limit(limit);
-    if (effectiveQuery.page) {
-      const numTours = await Tour.countDocuments();
-      if (skip >= numTours) {
-        throw new Error('This page does not exist');
-      }
-    }
+    // const page = parseInt(String(effectiveQuery.page || '1'), 10);
+    // const limit = parseInt(String(effectiveQuery.limit || '100'), 10);
+    // const skip = (page - 1) * limit;
+    // query = query.skip(skip).limit(limit);
+    // if (effectiveQuery.page) {
+    //   const numTours = await Tour.countDocuments();
+    //   if (skip >= numTours) {
+    //     throw new Error('This page does not exist');
+    //   }
+    // }
 
     //Execute Query
-    const tours = await query;
+    const features = new APIFeatures(Tour.find(), effectiveQuery)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const tours = await features.query;
 
     res.status(200).json({
       status: 'success',
@@ -200,6 +208,7 @@ const deleteTour = async (req, res) => {
     message: 'Deleted successfully',
   });
 };
+
 export {
   getAllTours,
   getTour,
