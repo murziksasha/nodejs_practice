@@ -70,6 +70,16 @@
       select: false,
     },
     startDates: [Date],
-  });
+  },
+{
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+  );
+
+tourSchema.virtual("durationWeeks").get(function () {
+  if (this.duration == null) return null;
+  return Number((this.duration / 7).toFixed(1));
+});
 
     export const Tour = mongoose.model("Tour", tourSchema);

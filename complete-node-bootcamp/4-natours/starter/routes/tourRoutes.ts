@@ -1,10 +1,12 @@
 import { Router } from 'express';
 
-import {createTour, deleteTour, getAllTours, aliasTopTours, getTour, updateTour, checkBody, getTourStats } from '../controllers/tourController';
+import {createTour, deleteTour, getAllTours, aliasTopTours, getTour, updateTour, checkBody, getTourStats, getMonthPlan } from '../controllers/tourController';
 
 const router = Router();
 
 // router.param('id', checkId);  // Middleware to validate ID parameter);
+
+router.route('/monthly-plan/:year').get(getMonthPlan);
 
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours);
 
