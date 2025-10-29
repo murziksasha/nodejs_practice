@@ -1,26 +1,27 @@
-  import * as mongoose from "mongoose";
-  
-  
-  export const tourSchema = new mongoose.Schema({
+import * as mongoose from 'mongoose';
+import slugify from 'slugify';
+
+export const tourSchema = new mongoose.Schema(
+  {
     name: {
       type: String,
-      required: [true, "A tour must have a name"],
-      unique: [true, "Tour name must be unique"],
-      maxlength: [40, "A tour name must have less or equal then 40 characters"],
-      minlength: [10, "A tour name must have more or equal then 10 characters"],
+      required: [true, 'A tour must have a name'],
+      unique: [true, 'Tour name must be unique'],
+      maxlength: [40, 'A tour name must have less or equal then 40 characters'],
+      minlength: [10, 'A tour name must have more or equal then 10 characters'],
       trim: true,
     },
     duration: {
       type: Number,
-      required: [true, "A tour must have a duration"],
+      required: [true, 'A tour must have a duration'],
     },
     maxGroupSize: {
       type: Number,
-      required: [true, "A tour must have a group size"],
+      required: [true, 'A tour must have a group size'],
     },
     difficulty: {
       type: String,
-      required: [true, "A tour must have a difficulty"],
+      required: [true, 'A tour must have a difficulty'],
       // enum: {
       //   values: ["easy", "medium", "difficult"],
       //   message: "Difficulty is either: easy, medium, difficult",
@@ -29,8 +30,8 @@
     ratingsAverage: {
       type: Number,
       default: 4.5,
-      min: [1, "Rating must be above 1.0"],
-      max: [5, "Rating must be below 5.0"],
+      min: [1, 'Rating must be above 1.0'],
+      max: [5, 'Rating must be below 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -38,7 +39,7 @@
     },
     price: {
       type: Number,
-      required: [true, "A tour must have a price"],
+      required: [true, 'A tour must have a price'],
     },
     priceDiscount: {
       type: Number,
@@ -47,13 +48,13 @@
         validator: function (val: number) {
           return val < this.price;
         },
-        message: "Discount price ({VALUE}) should be below regular price",
+        message: 'Discount price ({VALUE}) should be below regular price',
       },
     },
     summary: {
       type: String,
       trim: true,
-      required: [true, "A tour must have a summary"],
+      required: [true, 'A tour must have a summary'],
     },
     description: {
       type: String,
@@ -61,7 +62,7 @@
     },
     imageCover: {
       type: String,
-      required: [true, "A tour must have a cover image"],
+      required: [true, 'A tour must have a cover image'],
     },
     images: [String],
     createdAt: {
@@ -70,16 +71,25 @@
       select: false,
     },
     startDates: [Date],
+    slug: {
+      type: String
+    }
   },
-{
+  {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
-  );
+);
 
-tourSchema.virtual("durationWeeks").get(function () {
+tourSchema.virtual('durationWeeks').get(function () {
   if (this.duration == null) return null;
   return Number((this.duration / 7).toFixed(1));
 });
 
-    export const Tour = mongoose.model("Tour", tourSchema);
+// Document Middleware: runs before .save() and .create()
+tourSchema.pre('save', function (this: mongoose.Document & { name: string; slug?: string }, next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
+});
+
+export const Tour = mongoose.model('Tour', tourSchema);
