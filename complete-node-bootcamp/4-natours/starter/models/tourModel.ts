@@ -92,4 +92,14 @@ tourSchema.pre('save', function (this: mongoose.Document & { name: string; slug?
   next();
 });
 
+// tourSchema.pre('save', function (next) {
+//   // console.log('Will save document...');
+//   next();
+// });
+
+// tourSchema.post('save', function (doc, next) {
+//   // console.log(doc);
+//   next();
+// });
+
 export const Tour = mongoose.model('Tour', tourSchema);
