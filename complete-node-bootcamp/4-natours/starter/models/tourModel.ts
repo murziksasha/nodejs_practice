@@ -1,5 +1,6 @@
 import * as mongoose from 'mongoose';
 import slugify from 'slugify';
+import validator from 'validator'; 
 
 export const tourSchema = new mongoose.Schema(
   {
@@ -10,6 +11,10 @@ export const tourSchema = new mongoose.Schema(
       maxlength: [40, 'A tour name must have less or equal then 40 characters'],
       minlength: [10, 'A tour name must have more or equal then 10 characters'],
       trim: true,
+      // validate: [validator.isAlpha, // Only allows letters (no spaces or special characters)
+      //   'Tour name can only contain letters'
+      // ]/
+
     },
     duration: {
       type: Number,
