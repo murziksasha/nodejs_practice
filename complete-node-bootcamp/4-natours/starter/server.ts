@@ -1,16 +1,13 @@
-
-
-import * as mongoose from "mongoose";
-import * as dotenv from "dotenv";
-dotenv.config({ path: "./config.env" });
-import app from "./app";
-
+import * as mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: './config.env' });
+import app from './app';
 
 // Connect to the database
 
 const DB = process.env.DATABASE!.replace(
-  "<PASSWORD>",
-  process.env.DATABASE_PASSWORD!
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD!,
 );
 mongoose
   .connect(DB, {
@@ -19,10 +16,7 @@ mongoose
     useFindAndModify: false,
     // useUnifiedTopology: true,  // These options are no longer supported in Mongoose 6 and above
   })
-  .then(() => console.log("DB connection successful!  "));
-
-
-
+  .then(() => console.log('DB connection successful!  '));
 
 // Start the server
 
