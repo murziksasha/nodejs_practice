@@ -16,7 +16,7 @@ app.use(morgan('dev')); // Logging middleware for development
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(express.static(`${__dirname}/public`)); // Serve static files from the 'public' directory
 
-app.use((req, res, next) => {
+app.use((req: any, res: { created_at: string; }, next: () => void) => {
   const currentTime = new Date().toISOString();
   res.created_at = currentTime; // Add createdAt property to the response
   // console.log(`[${currentTime}] Request received:`);
@@ -27,6 +27,12 @@ app.use((req, res, next) => {
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
+app.all('*', (req: { originalUrl: any; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { status: string; message: string; }): void; new(): any; }; }; }, next: any) => {
+  res.status(404).json({
+    status: 'fail',
+    message: `Can't find ${req.originalUrl} on this server!`
+  });
+});
 
 export default app;
 
