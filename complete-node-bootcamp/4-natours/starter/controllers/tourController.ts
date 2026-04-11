@@ -1,9 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Request, Response, NextFunction } from 'express';
 import { Tour } from '../models/tourModel';
 import { APIFeatures } from '../utils/apiFeatures';
 
-const checkBody = (req, res, next) => {
+const checkBody = (req: Request, res: Response, next: NextFunction) => {
   if (!req.body.name || !req.body.price) {
     return res.status(400).json({
       status: 'fail',
@@ -13,7 +14,7 @@ const checkBody = (req, res, next) => {
   next();
 };
 
-const aliasTopTours = (req, res, next) => {
+const aliasTopTours = (req: Request, res: Response, next: NextFunction) => {
   const add = {
     limit: '5',
     sort: '-ratingsAverage,price',
@@ -27,9 +28,7 @@ const aliasTopTours = (req, res, next) => {
   next();
 };
 
-
-
-const getAllTours = async (req, res) => {
+const getAllTours = async (req: Request, res: Response) => {
   try {
     // merge original query with aliasQuery (alias wins)
     // @ts-ignore
@@ -111,12 +110,12 @@ const getAllTours = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
-const getTour = async (req, res) => {
+const getTour = async (req: Request, res: Response) => {
   try {
     const tour = await Tour.findById(req.params.id);
     // const tour = await Tour.findOne({ _id: req.params.id });
@@ -135,12 +134,12 @@ const getTour = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
-const createTour = async (req, res) => {
+const createTour = async (req: Request, res: Response) => {
   // const newTour = new Tour(req.body);
   // newTour.save();
 
@@ -155,12 +154,12 @@ const createTour = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       status: 'fail',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
-const updateTour = async (req, res) => {
+const updateTour = async (req: Request, res: Response) => {
   try {
     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -183,12 +182,12 @@ const updateTour = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
-const deleteTour = async (req, res) => {
+const deleteTour = async (req: Request, res: Response) => {
   try {
     const tour = await Tour.findByIdAndDelete(req.params.id);
     if (!tour) {
@@ -200,7 +199,7 @@ const deleteTour = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
   res.status(200).json({
@@ -209,12 +208,12 @@ const deleteTour = async (req, res) => {
   });
 };
 
-const getTourStats = async (req, res) => {
+const getTourStats = async (req: Request, res: Response) => {
   try {
     const stats = await Tour.aggregate([
       { $match: { ratingsAverage: { $gte: 4.5 } } },
       {
-        $group: { 
+        $group: {
           _id: { $toUpper: '$difficulty' },
           numTours: { $sum: 1 },
           numRatings: { $sum: '$ratingsQuantity' },
@@ -236,22 +235,24 @@ const getTourStats = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
 
-export const getMonthPlan = async (req, res) => {
+export const getMonthPlan = async (req: Request, res: Response) => {
   try {
     const year = parseInt(req.params.year, 10); // 2021
     const plan = await Tour.aggregate([
       { $unwind: '$startDates' },
-      { $match: {
-        startDates: {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`),
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`),
+          },
         },
-      }, },
+      },
       {
         $group: {
           _id: { $month: '$startDates' },
@@ -273,11 +274,10 @@ export const getMonthPlan = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: 'error',
-      message: error.message,
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
-
 
 export {
   getAllTours,
@@ -287,5 +287,5 @@ export {
   deleteTour,
   checkBody,
   aliasTopTours,
-  getTourStats
+  getTourStats,
 };
