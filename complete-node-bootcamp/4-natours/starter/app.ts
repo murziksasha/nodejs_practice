@@ -40,7 +40,7 @@ app.all('*', (req: { originalUrl: any; }, res: { status: (arg0: number) => { ():
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-app.use(() => globalErrorHandler);
+app.use(globalErrorHandler);
 
 
 export default app;
