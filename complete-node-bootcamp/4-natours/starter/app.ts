@@ -5,6 +5,9 @@ const express = require('express');
 const tourRouter = require('./routes/tourRoutes').default;
 const userRouter = require('./routes/userRoutes').default;
 
+const AppError = require('./utils/appError').default;
+const globalErrorHandler = require('./controllers/errorController').default;
+
 const app = express();
 
 if(process.env.NODE_ENV === 'development') {
@@ -28,27 +31,16 @@ app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
 app.all('*', (req: { originalUrl: any; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { status: string; message: string; }): void; new(): any; }; }; }, next: any) => {
-  // res.status(404).json({
-  //   status: 'fail',
-  //   message: `Can't find ${req.originalUrl} on this server!`
-  // });
-  const err = new Error(`Can't find ${req.originalUrl} on this server!`);
-  // @ts-ignore
-  err.statusCode = 404;
-  // @ts-ignore
-  err.status = 'fail';
-  next(err);
+  // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
+  // // @ts-ignore
+  // err.statusCode = 404;
+  // // @ts-ignore
+  // err.status = 'fail';
+  // next(err);
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-app.use((err: any, req: any, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { status: string; message: string; }): void; new(): any; }; }; }, next: any) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
-
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message
-  });
-});
+app.use(() => globalErrorHandler);
 
 
 export default app;
