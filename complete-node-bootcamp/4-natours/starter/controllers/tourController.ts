@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from 'express';
 import { Tour } from '../models/tourModel';
 import { APIFeatures } from '../utils/apiFeatures';
@@ -29,101 +28,100 @@ const aliasTopTours = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const getAllTours = catchAsync(async (req: Request, res: Response) => {
+  // merge original query with aliasQuery (alias wins)
+  // @ts-ignore
+  const effectiveQuery = {
+    ...(req.query || {}),
+    ...((req as any).aliasQuery || {}),
+  };
 
-    // merge original query with aliasQuery (alias wins)
-    // @ts-ignore
-    const effectiveQuery = {
-      ...(req.query || {}),
-      ...((req as any).aliasQuery || {}),
-    };
+  //Build the query
+  //1) Filterings
+  // const queryObject = { ...effectiveQuery };
+  // const excludedFields = ['page', 'sort', 'limit', 'fields'];
+  // excludedFields.forEach((el) => delete queryObject[el]);
 
-    //Build the query
-    //1) Filterings
-    // const queryObject = { ...effectiveQuery };
-    // const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    // excludedFields.forEach((el) => delete queryObject[el]);
+  //2) Advanced Filtering
+  // const mongoQuery: any = {};
+  // Object.keys(queryObject).forEach((key) => {
+  //   const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
+  //   if (match) {
+  //     const field = match[1];
+  //     const operator = `$${match[2]}`;
+  //     if (!mongoQuery[field]) mongoQuery[field] = {};
+  //     const val = isNaN(queryObject[key])
+  //       ? queryObject[key]
+  //       : Number(queryObject[key]);
+  //     mongoQuery[field][operator] = val;
+  //   } else {
+  //     mongoQuery[key] = isNaN(queryObject[key])
+  //       ? queryObject[key]
+  //       : Number(queryObject[key]);
+  //   }
+  // });
 
-    //2) Advanced Filtering
-    // const mongoQuery: any = {};
-    // Object.keys(queryObject).forEach((key) => {
-    //   const match = key.match(/^(\w+)\[(gte|gt|lte|lt)\]$/);
-    //   if (match) {
-    //     const field = match[1];
-    //     const operator = `$${match[2]}`;
-    //     if (!mongoQuery[field]) mongoQuery[field] = {};
-    //     const val = isNaN(queryObject[key])
-    //       ? queryObject[key]
-    //       : Number(queryObject[key]);
-    //     mongoQuery[field][operator] = val;
-    //   } else {
-    //     mongoQuery[key] = isNaN(queryObject[key])
-    //       ? queryObject[key]
-    //       : Number(queryObject[key]);
-    //   }
-    // });
+  // let query = Tour.find(mongoQuery);
 
-    // let query = Tour.find(mongoQuery);
+  //3) Sorting
+  // if (effectiveQuery.sort) {
+  //   const sortBy = String(effectiveQuery.sort).split(',').join(' ');
+  //   query = query.sort(sortBy);
+  // } else {
+  //   query = query.sort('-createdAt');
+  // }
 
-    //3) Sorting
-    // if (effectiveQuery.sort) {
-    //   const sortBy = String(effectiveQuery.sort).split(',').join(' ');
-    //   query = query.sort(sortBy);
-    // } else {
-    //   query = query.sort('-createdAt');
-    // }
+  //4) Field Limiting
+  // if (effectiveQuery.fields) {
+  //   const fields = String(effectiveQuery.fields).split(',').join(' ');
+  //   query = query.select(fields);
+  // } else {
+  //   query = query.select('-__v');
+  // }
 
-    //4) Field Limiting
-    // if (effectiveQuery.fields) {
-    //   const fields = String(effectiveQuery.fields).split(',').join(' ');
-    //   query = query.select(fields);
-    // } else {
-    //   query = query.select('-__v');
-    // }
+  //5) Pagination
+  // const page = parseInt(String(effectiveQuery.page || '1'), 10);
+  // const limit = parseInt(String(effectiveQuery.limit || '100'), 10);
+  // const skip = (page - 1) * limit;
+  // query = query.skip(skip).limit(limit);
+  // if (effectiveQuery.page) {
+  //   const numTours = await Tour.countDocuments();
+  //   if (skip >= numTours) {
+  //     throw new Error('This page does not exist');
+  //   }
+  // }
 
-    //5) Pagination
-    // const page = parseInt(String(effectiveQuery.page || '1'), 10);
-    // const limit = parseInt(String(effectiveQuery.limit || '100'), 10);
-    // const skip = (page - 1) * limit;
-    // query = query.skip(skip).limit(limit);
-    // if (effectiveQuery.page) {
-    //   const numTours = await Tour.countDocuments();
-    //   if (skip >= numTours) {
-    //     throw new Error('This page does not exist');
-    //   }
-    // }
+  //Execute Query
+  const features = new APIFeatures(Tour.find(), effectiveQuery)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+  const tours = await features.query;
 
-    //Execute Query
-    const features = new APIFeatures(Tour.find(), effectiveQuery)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate();
-    const tours = await features.query;
-
-    res.status(200).json({
-      status: 'success',
-      results: tours.length,
-      data: {
-        tours,
-      },
-    });
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+    data: {
+      tours,
+    },
+  });
 });
 
 const getTour = catchAsync(async (req: Request, res: Response) => {
   const tour = await Tour.findById(req.params.id);
-    // const tour = await Tour.findOne({ _id: req.params.id });
-    if (!tour) {
-      return res.status(404).json({
-        status: 'fail',
-        message: 'Tour not found',
-      });
-    }
-    res.status(200).json({
-      status: 'success',
-      data: {
-        tour,
-      },
+  // const tour = await Tour.findOne({ _id: req.params.id });
+  if (!tour) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'Tour not found',
     });
+  }
+  res.status(200).json({
+    status: 'success',
+    data: {
+      tour,
+    },
+  });
 });
 
 const createTour = catchAsync(async (req: Request, res: Response) => {
@@ -199,7 +197,7 @@ const getTourStats = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const getMonthPlan = catchAsync(async (req: Request, res: Response) => {
+const getMonthPlan = catchAsync(async (req: Request, res: Response) => {
   const year = parseInt(req.params.year, 10); // 2021
   const plan = await Tour.aggregate([
     { $unwind: '$startDates' },
@@ -240,4 +238,5 @@ export {
   checkBody,
   aliasTopTours,
   getTourStats,
+  getMonthPlan,
 };
