@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { Tour } from '../models/tourModel';
 import { APIFeatures } from '../utils/apiFeatures';
 import { catchAsync } from '../utils/catchAsync';
+import { notFound } from '../utils/404';
+import AppError from '../utils/appError';
 
 const checkBody = (req: Request, res: Response, next: NextFunction) => {
   if (!req.body.name || !req.body.price) {
@@ -107,22 +109,23 @@ const getAllTours = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getTour = catchAsync(async (req: Request, res: Response) => {
-  const tour = await Tour.findById(req.params.id);
-  // const tour = await Tour.findOne({ _id: req.params.id });
-  if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'Tour not found',
+const getTour = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const tour = await Tour.findById(req.params.id);
+    // const tour = await Tour.findOne({ _id: req.params.id });
+    if (!tour) {
+      // return next(notFound(req));
+      return next( new AppError('Tour not found with that ID', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour,
+      },
     });
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-});
+  },
+);
 
 const createTour = catchAsync(async (req: Request, res: Response) => {
   // const newTour = new Tour(req.body);
