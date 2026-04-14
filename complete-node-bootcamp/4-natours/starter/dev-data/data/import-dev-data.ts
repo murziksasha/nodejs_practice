@@ -1,17 +1,15 @@
-
-import fs = require("fs");
-import path = require("path");
-import * as mongoose from "mongoose";
-import * as dotenv from "dotenv";
-dotenv.config({ path: "./config.env" });
-import { Tour } from "../../models/tourModel";
-
+import fs = require('fs');
+import path = require('path');
+import mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: './config.env' });
+import { Tour } from '../../models/tourModel';
 
 // Connect to the database
 
 const DB = process.env.DATABASE!.replace(
-  "<PASSWORD>",
-  process.env.DATABASE_PASSWORD!
+  '<PASSWORD>',
+  process.env.DATABASE_PASSWORD!,
 );
 mongoose
   .connect(DB, {
@@ -20,18 +18,18 @@ mongoose
     useFindAndModify: false,
     // useUnifiedTopology: true,  // These options are no longer supported in Mongoose 6 and above
   })
-  .then(() => console.log("DB connection successful!  "));
+  .then(() => console.log('DB connection successful!  '));
 
 // Read JSON file
 const tours = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "tours-simple.json"), "utf-8")
+  fs.readFileSync(path.join(__dirname, 'tours-simple.json'), 'utf-8'),
 );
 
 // Import data into DB
 const importData = async () => {
   try {
     await Tour.create(tours);
-    console.log("Data successfully loaded!");
+    console.log('Data successfully loaded!');
   } catch (err) {
     console.log(err);
   }
@@ -42,15 +40,16 @@ const importData = async () => {
 const deleteData = async () => {
   try {
     await Tour.deleteMany();
-    console.log("Data successfully deleted!");
+    console.log('Data successfully deleted!');
   } catch (err) {
     console.log(err);
-  } process.exit(); 
+  }
+  process.exit();
 };
 
-if (process.argv[2] === "--import") {
+if (process.argv[2] === '--import') {
   importData();
-} else if (process.argv[2] === "--delete") {
+} else if (process.argv[2] === '--delete') {
   deleteData();
 }
 

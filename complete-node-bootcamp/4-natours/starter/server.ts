@@ -1,4 +1,4 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: './config.env' });
 import app from './app';

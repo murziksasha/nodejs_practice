@@ -1,6 +1,6 @@
-import * as mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import slugify from 'slugify';
-import validator from 'validator'; 
+import validator from 'validator';
 
 export const tourSchema = new mongoose.Schema(
   {
@@ -14,7 +14,6 @@ export const tourSchema = new mongoose.Schema(
       // validate: [validator.isAlpha, // Only allows letters (no spaces or special characters)
       //   'Tour name can only contain letters'
       // ]/
-
     },
     duration: {
       type: Number,
@@ -77,7 +76,7 @@ export const tourSchema = new mongoose.Schema(
     },
     startDates: [Date],
     slug: {
-      type: String
+      type: String,
     },
     secretTour: {
       type: Boolean,
@@ -87,7 +86,7 @@ export const tourSchema = new mongoose.Schema(
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 tourSchema.virtual('durationWeeks').get(function () {
@@ -96,10 +95,13 @@ tourSchema.virtual('durationWeeks').get(function () {
 });
 
 // Document Middleware: runs before .save() and .create()
-tourSchema.pre('save', function (this: mongoose.Document & { name: string; slug?: string }, next) {
-  this.slug = slugify(this.name, { lower: true });
-  next();
-});
+tourSchema.pre(
+  'save',
+  function (this: mongoose.Document & { name: string; slug?: string }, next) {
+    this.slug = slugify(this.name, { lower: true });
+    next();
+  },
+);
 
 // tourSchema.pre('save', function (next) {
 //   // console.log('Will save document...');
@@ -122,6 +124,5 @@ tourSchema.post(/^find/, function (this: any, docs, next) {
   console.log(`Query took ${Date.now() - this.start} milliseconds!`);
   next();
 });
-
 
 export const Tour = mongoose.model('Tour', tourSchema);
