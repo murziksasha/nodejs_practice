@@ -1,8 +1,27 @@
 import mongoose from 'mongoose';
 import slugify from 'slugify';
-import validator from 'validator';
 
-export const tourSchema = new mongoose.Schema(
+export interface ITour extends mongoose.Document {
+  name: string;
+  duration: number;
+  maxGroupSize: number;
+  difficulty: string;
+  ratingsAverage: number;
+  ratingsQuantity: number;
+  price: number;
+  priceDiscount?: number;
+  summary: string;
+  description?: string;
+  imageCover: string;
+  images?: string[];
+  createdAt: Date;
+  startDates?: Date[];
+  slug?: string;
+  secretTour: boolean;
+  durationWeeks?: number | null;
+}
+
+export const tourSchema = new mongoose.Schema<ITour>(
   {
     name: {
       type: String,
@@ -11,9 +30,6 @@ export const tourSchema = new mongoose.Schema(
       maxlength: [40, 'A tour name must have less or equal then 40 characters'],
       minlength: [10, 'A tour name must have more or equal then 10 characters'],
       trim: true,
-      // validate: [validator.isAlpha, // Only allows letters (no spaces or special characters)
-      //   'Tour name can only contain letters'
-      // ]/
     },
     duration: {
       type: Number,
@@ -26,10 +42,6 @@ export const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'A tour must have a difficulty'],
-      // enum: {
-      //   values: ["easy", "medium", "difficult"],
-      //   message: "Difficulty is either: easy, medium, difficult",
-      // },
     },
     ratingsAverage: {
       type: Number,
@@ -47,9 +59,8 @@ export const tourSchema = new mongoose.Schema(
     },
     priceDiscount: {
       type: Number,
-      // This only points to current doc on NEW document creation
       validate: {
-        validator: function (val: number) {
+        validator: function (this: ITour, val: number) {
           return val < this.price;
         },
         message: 'Discount price ({VALUE}) should be below regular price',
@@ -89,40 +100,35 @@ export const tourSchema = new mongoose.Schema(
   },
 );
 
-tourSchema.virtual('durationWeeks').get(function () {
+tourSchema.virtual('durationWeeks').get(function (this: ITour) {
   if (this.duration == null) return null;
   return Number((this.duration / 7).toFixed(1));
 });
 
 // Document Middleware: runs before .save() and .create()
-tourSchema.pre(
-  'save',
-  function (this: mongoose.Document & { name: string; slug?: string }, next) {
+tourSchema.pre('save', function (this: ITour, next) {
+  if (this.name) {
     this.slug = slugify(this.name, { lower: true });
+  }
+  next();
+});
+
+// Query Middleware
+tourSchema.pre(
+  /^find/,
+  function (this: mongoose.Query<any, ITour> & { start: number }, next) {
+    this.find({ secretTour: { $ne: true } });
+    this.start = Date.now();
     next();
   },
 );
 
-// tourSchema.pre('save', function (next) {
-//   // console.log('Will save document...');
-//   next();
-// });
+tourSchema.post(
+  /^find/,
+  function (this: mongoose.Query<any, ITour> & { start: number }, docs, next) {
+    console.log(`Query took ${Date.now() - this.start} milliseconds!`);
+    next();
+  },
+);
 
-// tourSchema.post('save', function (doc, next) {
-//   // console.log(doc);
-//   next();
-// });
-
-// Query Middleware
-tourSchema.pre(/^find/, function (this: any, next) {
-  this.find({ secretTour: { $ne: true } });
-  this.start = Date.now();
-  next();
-});
-
-tourSchema.post(/^find/, function (this: any, docs, next) {
-  console.log(`Query took ${Date.now() - this.start} milliseconds!`);
-  next();
-});
-
-export const Tour = mongoose.model('Tour', tourSchema);
+export const Tour = mongoose.model<ITour>('Tour', tourSchema);
