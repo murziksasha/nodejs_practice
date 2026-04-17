@@ -4,6 +4,8 @@ import AppError from '../utils/appError';
 import { catchAsync } from '../utils/catchAsync';
 
 const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);
+const getSingleParam = (param: string | string[] | undefined): string | undefined =>
+  Array.isArray(param) ? param[0] : param;
 
 const getAllUsers = catchAsync(async (_req: Request, res: Response): Promise<void> => {
   const users = await User.find();
@@ -19,16 +21,18 @@ const getAllUsers = catchAsync(async (_req: Request, res: Response): Promise<voi
 
 const getUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (!req.params.id || !isValidMongoId(req.params.id)) {
+    const userId = getSingleParam(req.params.id);
+
+    if (!userId || !isValidMongoId(userId)) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(userId);
     if (!user) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 
@@ -56,20 +60,22 @@ const createUser = catchAsync(
 
 const updateUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (!req.params.id || !isValidMongoId(req.params.id)) {
+    const userId = getSingleParam(req.params.id);
+
+    if (!userId || !isValidMongoId(userId)) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const user = await User.findByIdAndUpdate(userId, req.body, {
       new: true,
       runValidators: true,
     });
 
     if (!user) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 
@@ -84,16 +90,18 @@ const updateUser = catchAsync(
 
 const deleteUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (!req.params.id || !isValidMongoId(req.params.id)) {
+    const userId = getSingleParam(req.params.id);
+
+    if (!userId || !isValidMongoId(userId)) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete(userId);
     if (!user) {
       return next(
-        new AppError(`User not found with that ID ${req.params.id}`, 404),
+        new AppError(`User not found with that ID ${userId}`, 404),
       );
     }
 

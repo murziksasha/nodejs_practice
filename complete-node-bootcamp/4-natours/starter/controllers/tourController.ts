@@ -4,6 +4,9 @@ import { APIFeatures } from '../utils/apiFeatures';
 import { catchAsync } from '../utils/catchAsync';
 import AppError from '../utils/appError';
 
+const getSingleParam = (param: string | string[] | undefined): string | undefined =>
+  Array.isArray(param) ? param[0] : param;
+
 const checkBody = (req: Request, res: Response, next: NextFunction) => {
   if (!req.body.name || !req.body.price) {
     return res.status(400).json({
@@ -110,16 +113,18 @@ const getAllTours = catchAsync(async (req: Request, res: Response) => {
 
 const getTour = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.params.id || !/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+    const tourId = getSingleParam(req.params.id);
+
+    if (!tourId || !/^[0-9a-fA-F]{24}$/.test(tourId)) {
       return next(
-        new AppError(`Tour not found with that ID ${req.params.id}`, 404),
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
       );
     }
-    const tour = await Tour.findById(req.params.id);
+    const tour = await Tour.findById(tourId);
     // const tour = await Tour.findOne({ _id: req.params.id });
     if (!tour) {
       return next(
-        new AppError(`Tour not found with that ID ${req.params.id}`, 404),
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
       );
     }
 
@@ -147,7 +152,15 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
 
 const updateTour = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+    const tourId = getSingleParam(req.params.id);
+
+    if (!tourId || !/^[0-9a-fA-F]{24}$/.test(tourId)) {
+      return next(
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
+      );
+    }
+
+    const tour = await Tour.findByIdAndUpdate(tourId, req.body, {
       new: true,
       runValidators: true,
     });
@@ -155,7 +168,7 @@ const updateTour = catchAsync(
 
     if (!tour) {
       return next(
-        new AppError(`Tour not found with that ID ${req.params.id}`, 404),
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
       );
     }
 
@@ -170,11 +183,19 @@ const updateTour = catchAsync(
 
 const deleteTour = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const tour = await Tour.findByIdAndDelete(req.params.id);
+    const tourId = getSingleParam(req.params.id);
+
+    if (!tourId || !/^[0-9a-fA-F]{24}$/.test(tourId)) {
+      return next(
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
+      );
+    }
+
+    const tour = await Tour.findByIdAndDelete(tourId);
 
     if (!tour) {
       return next(
-        new AppError(`Tour not found with that ID ${req.params.id}`, 404),
+        new AppError(`Tour not found with that ID ${tourId}`, 404),
       );
     }
 
@@ -211,7 +232,8 @@ const getTourStats = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMonthPlan = catchAsync(async (req: Request, res: Response) => {
-  const year = parseInt(req.params.year, 10); // 2021
+  const yearParam = getSingleParam(req.params.year);
+  const year = parseInt(yearParam ?? '', 10); // 2021
   const plan = await Tour.aggregate([
     { $unwind: '$startDates' },
     {
