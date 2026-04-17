@@ -77,5 +77,7 @@ export default (err: any, req: any, res: any, next: any) => {
     sendErrorDev(error, res);
   } else if (process.env.NODE_ENV === 'production') {
     sendErrorProd(error, res);
+  } else {
+    sendErrorDev(error, res);
   }
 };
