@@ -6,6 +6,21 @@ import { catchAsync } from '../utils/catchAsync';
 const isValidMongoId = (id: string): boolean => /^[0-9a-fA-F]{24}$/.test(id);
 const getSingleParam = (param: string | string[] | undefined): string | undefined =>
   Array.isArray(param) ? param[0] : param;
+const allowedCreateUserFields = [
+  'name',
+  'email',
+  'photo',
+  'password',
+  'passwordConfirm',
+] as const;
+
+const filterObject = <T extends readonly string[]>(
+  source: Record<string, unknown>,
+  allowedFields: T,
+): Partial<Record<T[number], unknown>> =>
+  Object.fromEntries(
+    Object.entries(source).filter(([key]) => allowedFields.includes(key as T[number])),
+  ) as Partial<Record<T[number], unknown>>;
 
 const getAllUsers = catchAsync(async (_req: Request, res: Response): Promise<void> => {
   const users = await User.find();
@@ -46,8 +61,23 @@ const getUser = catchAsync(
 );
 
 const createUser = catchAsync(
-  async (req: Request, res: Response): Promise<void> => {
-    const user = await User.create(req.body);
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const unexpectedFields = Object.keys(req.body).filter(
+      (field) => !allowedCreateUserFields.includes(field as typeof allowedCreateUserFields[number]),
+    );
+
+    if (unexpectedFields.length > 0) {
+      return next(
+        new AppError(`Unexpected fields: ${unexpectedFields.join(', ')}`, 400),
+      );
+    }
+
+    const filteredBody = filterObject(
+      req.body as Record<string, unknown>,
+      allowedCreateUserFields,
+    );
+
+    const user = await User.create(filteredBody);
 
     res.status(201).json({
       status: 'success',

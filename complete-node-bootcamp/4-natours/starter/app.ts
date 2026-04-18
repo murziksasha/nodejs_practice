@@ -31,7 +31,7 @@ app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/user', userRouter);
 
-app.all('*', (req: { originalUrl: any; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { status: string; message: string; }): void; new(): any; }; }; }, next: any) => {
+app.use((req: { originalUrl: any; }, res: { status: (arg0: number) => { (): any; new(): any; json: { (arg0: { status: string; message: string; }): void; new(): any; }; }; }, next: any) => {
   // const err = new Error(`Can't find ${req.originalUrl} on this server!`);
   // // @ts-ignore
   // err.statusCode = 404;
