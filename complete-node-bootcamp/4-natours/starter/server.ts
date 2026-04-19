@@ -11,9 +11,14 @@ process.on('uncaughtException', (err: any) => {
 
 // Connect to the database
 
+const encodeMongoPassword = (password: string) =>
+  encodeURIComponent(password).replace(/[!'()*]/g, (char) =>
+    `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
 const DB = process.env.DATABASE!.replace(
   '<PASSWORD>',
-  process.env.DATABASE_PASSWORD!,
+  encodeMongoPassword(process.env.DATABASE_PASSWORD!),
 );
 mongoose
   .connect(DB, {
